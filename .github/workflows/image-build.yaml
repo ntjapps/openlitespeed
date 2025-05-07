@@ -14,8 +14,6 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   PACKAGE_NAME: ${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}
-  REGISTRY_DOCKER: docker.io
-  IMAGE_NAME_DOCKER: ${{ vars.DOCKERHUB_REPO }}
 
 jobs:
   build-lsphp:
@@ -92,12 +90,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Login to Docker Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY_DOCKER }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Get & Set Container Metadata
         id: meta-packages
@@ -105,7 +97,6 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ env.REGISTRY_DOCKER }}/${{ env.IMAGE_NAME_DOCKER }}
           tags: |
             ${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}
             type=raw,value=latest,enable=${{ matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
