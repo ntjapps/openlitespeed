@@ -26,10 +26,16 @@ jobs:
       max-parallel: 4
       matrix:
         php_version:
-          - version: 8.3
-            php_detail_version: 8.3.13
-            lsphp_version: lsphp83
+          - version: 8.4
+            php_detail_version: 8.4.15
+            lsphp_version: lsphp84
             php_tag_version: latest
+            oci_version: "1"
+            deprecated: false
+          - version: 8.4
+            php_detail_version: 8.4.15
+            lsphp_version: lsphp84
+            php_tag_version: php84
             oci_version: "1"
             deprecated: false
           - version: 8.3
