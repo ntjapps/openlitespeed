@@ -38,30 +38,6 @@ jobs:
             php_tag_version: php83
             oci_version: "1"
             deprecated: false
-          - version: 8.2
-            php_detail_version: 8.2.26
-            lsphp_version: lsphp82
-            php_tag_version: php82
-            oci_version: "1"
-            deprecated: false
-          - version: 8.1
-            php_detail_version: 8.1.31
-            lsphp_version: lsphp81
-            php_tag_version: php81
-            oci_version: 3.2.1
-            deprecated: true
-          - version: 8.0
-            php_detail_version: 8.0.30
-            lsphp_version: lsphp80
-            php_tag_version: php80
-            oci_version: 3.0.1
-            deprecated: true
-          - version: 7.4
-            php_detail_version: 7.4.33
-            lsphp_version: lsphp74
-            php_tag_version: php74
-            oci_version: 2.2.0
-            deprecated: true
         php_extensions:
           - name: "base"
             experimental: false
