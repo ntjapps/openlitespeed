@@ -8,7 +8,8 @@ ARG LS_VERSION
 ARG PHP_DETAIL_VERSION
 
 # Install Base PHP
-RUN apt-get install -y ${LS_VERSION} ${LS_VERSION}-common ${LS_VERSION}-curl ${LS_VERSION}-dbg ${LS_VERSION}-dev ${LS_VERSION}-imap ${LS_VERSION}-intl ${LS_VERSION}-ldap ${LS_VERSION}-modules-source ${LS_VERSION}-mysql ${LS_VERSION}-opcache ${LS_VERSION}-pgsql ${LS_VERSION}-pspell ${LS_VERSION}-snmp ${LS_VERSION}-sqlite3 ${LS_VERSION}-sybase ${LS_VERSION}-tidy && \
+RUN apt-get install -y ${LS_VERSION} ${LS_VERSION}-common ${LS_VERSION}-curl ${LS_VERSION}-dbg ${LS_VERSION}-dev ${LS_VERSION}-imap ${LS_VERSION}-intl ${LS_VERSION}-ldap ${LS_VERSION}-modules-source ${LS_VERSION}-mysql ${LS_VERSION}-pgsql ${LS_VERSION}-pspell ${LS_VERSION}-snmp ${LS_VERSION}-sqlite3 ${LS_VERSION}-sybase ${LS_VERSION}-tidy && \
+    if apt-cache show ${LS_VERSION}-opcache > /dev/null 2>&1; then apt-get install -y ${LS_VERSION}-opcache; fi && \
     apt-get autoclean -y && \
     ln -sf /usr/local/lsws/${LS_VERSION}/bin/php /usr/bin/php && \
     ln -sf /usr/local/lsws/${LS_VERSION} /usr/local/lsws/lsactive &&\
