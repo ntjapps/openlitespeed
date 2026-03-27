@@ -7,7 +7,7 @@ ARG PHP_VERSION
 ARG LS_VERSION
 ARG PHP_DETAIL_VERSION
 
-# Install Base PHP (Removed imap, ldap, pspell, snmp, sybase, tidy)
+# Install Base PHP (Removed: bz2, calendar, enchant, excimer, ftp, gettext, imap, ldap, lexbor, memcached, pdo_dblib, pspell, readline, snmp, soap, sysvmsg, sysvsem, tidy, xsl)
 RUN apt-get install -y ${LS_VERSION} ${LS_VERSION}-common ${LS_VERSION}-curl ${LS_VERSION}-dbg ${LS_VERSION}-dev ${LS_VERSION}-intl ${LS_VERSION}-modules-source ${LS_VERSION}-mysql ${LS_VERSION}-pgsql ${LS_VERSION}-sqlite3 && \
     if apt-cache show ${LS_VERSION}-opcache > /dev/null 2>&1; then apt-get install -y ${LS_VERSION}-opcache; fi && \
     apt-get autoclean -y && \
@@ -46,7 +46,6 @@ COPY ./php.d/20-mongodb.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}
 RUN php -v && \
     php -m
 
-# Connect directly from mongodb to base, skipping the removed excimer and memcached stages
 FROM base-php-mongodb AS base
 
 COPY ./php.d/20-swoole.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-swoole.ini
