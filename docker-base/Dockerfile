@@ -1,4 +1,4 @@
-FROM debian:12-slim
+FROM debian:13-slim
 
 RUN apt-get update && apt-get upgrade -y && apt-get autoremove -y && apt-get install -y curl wget && \
     wget -O - https://repo.litespeed.sh | bash && \

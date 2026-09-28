@@ -95,7 +95,12 @@ ARG ORACLE_ZIP_DIR=instantclient_21_23
 ARG OCI_VERSION=3.4.1
 
 # Install Oracle Instant Client
-RUN apt-get install -y libaio-dev libaio1 unzip && mkdir -p /usr/oracle && \
+# Debian 13 renamed libaio1 to libaio1t64 (libaio.so.1t64); Instant Client links against libaio.so.1.
+RUN if apt-cache show libaio1t64 >/dev/null 2>&1; then aio=libaio1t64; else aio=libaio1; fi && \
+    apt-get install -y libaio-dev ${aio} unzip && mkdir -p /usr/oracle && \
+    for so in /usr/lib/*/libaio.so.1t64; do \
+        [ -e "$so" ] && [ ! -e "$(dirname "$so")/libaio.so.1" ] && ln -s "$so" "$(dirname "$so")/libaio.so.1" || true; \
+    done && \
     curl https://download.oracle.com/otn_software/linux/instantclient/${ORACLE_SIMPLE_VERSION}/instantclient-basic-linux.x64-${ORACLE_VERSION}dbru.zip --output /usr/oracle/oic.zip && \
     curl https://download.oracle.com/otn_software/linux/instantclient/${ORACLE_SIMPLE_VERSION}/instantclient-sdk-linux.x64-${ORACLE_VERSION}dbru.zip --output /usr/oracle/sdk.zip && \
     cd /usr/oracle && \
@@ -105,7 +110,8 @@ RUN apt-get install -y libaio-dev libaio1 unzip && mkdir -p /usr/oracle && \
     rm -f sdk.zip && \
     apt-get autoclean -y && \
     echo /usr/oracle/${ORACLE_ZIP_DIR} > /etc/ld.so.conf.d/oracle-instantclient.conf && \
-    ldconfig
+    ldconfig && \
+    ! ldd /usr/oracle/${ORACLE_ZIP_DIR}/libclntsh.so | grep 'not found'
     
 COPY ./php.d/20-pdo_oci.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-pdo_oci.ini
 
