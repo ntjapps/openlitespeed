@@ -61,7 +61,7 @@ RUN php -v && \
 # Target Image
 FROM base AS pcov
 
-ARG PCOV_VERSION=1.0.11
+ARG PCOV_VERSION=1.0.12
 
 # Install PCOV
 RUN /usr/bin/pecl install pcov && \
@@ -89,10 +89,10 @@ RUN php -v && \
 # Target Image
 FROM base AS oci
 
-ARG ORACLE_VERSION=21.15.0.0.0
-ARG ORACLE_SIMPLE_VERSION=2115000
-ARG ORACLE_ZIP_DIR=instantclient_21_15
-ARG OCI_VERSION=3.4.0
+ARG ORACLE_VERSION=21.23.0.0.0
+ARG ORACLE_SIMPLE_VERSION=2123000
+ARG ORACLE_ZIP_DIR=instantclient_21_23
+ARG OCI_VERSION=3.4.1
 
 # Install Oracle Instant Client
 RUN apt-get install -y libaio-dev libaio1 unzip && mkdir -p /usr/oracle && \
