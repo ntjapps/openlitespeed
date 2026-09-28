@@ -99,8 +99,8 @@ RUN apt-get install -y libaio-dev libaio1 unzip && mkdir -p /usr/oracle && \
     curl https://download.oracle.com/otn_software/linux/instantclient/${ORACLE_SIMPLE_VERSION}/instantclient-basic-linux.x64-${ORACLE_VERSION}dbru.zip --output /usr/oracle/oic.zip && \
     curl https://download.oracle.com/otn_software/linux/instantclient/${ORACLE_SIMPLE_VERSION}/instantclient-sdk-linux.x64-${ORACLE_VERSION}dbru.zip --output /usr/oracle/sdk.zip && \
     cd /usr/oracle && \
-    unzip oic.zip && \
-    unzip sdk.zip && \
+    unzip -o oic.zip && \
+    unzip -o sdk.zip && \
     rm -f oic.zip && \
     rm -f sdk.zip && \
     apt-get autoclean -y && \
