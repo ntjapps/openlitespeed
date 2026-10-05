@@ -18,9 +18,7 @@ jobs:
       packages: write
     steps:
       - name: Delete all containers from package without tags
-        uses: actions/delete-package-versions@v5
+        uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          package-name: ${{ vars.IMAGE_NAME }}
-          package-type: container
-          min-versions-to-keep: 20
-          delete-only-untagged-versions: true
+          package: ${{ vars.IMAGE_NAME }}
+          keep-n-untagged: 20
