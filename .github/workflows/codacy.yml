@@ -41,6 +41,14 @@ jobs:
 
           max-allowed-issues: 2147483647
 
+      - name: Assign unique categories to SARIF runs
+        # upload-sarif rejects files containing multiple runs with the same
+        # category (derived from automationDetails.id).  Set a distinct id on
+        # every run so CodeQL accepts the upload.
+        # See: https://github.blog/changelog/2025-07-21-code-scanning-will-stop-combining-multiple-sarif-runs-uploaded-in-the-same-sarif-file/
+        run: |
+          jq '.runs |= (to_entries | map(.value.automationDetails.id = "codacy-run-\(.key)" | .value))' results.sarif > results.fixed.sarif && mv results.fixed.sarif results.sarif
+
       - name: Upload SARIF results file
         uses: github/codeql-action/upload-sarif@v4
         with:
