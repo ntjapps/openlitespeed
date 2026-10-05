@@ -17,13 +17,124 @@ env:
 
 jobs:
   build-lsphp:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.arch.runner }}
     permissions:
       contents: read
       packages: write
     continue-on-error: ${{ matrix.php_version.deprecated || matrix.php_extensions.experimental }}
     strategy:
-      max-parallel: 4
+      max-parallel: 8
+      matrix:
+        arch:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+        php_version:
+          - version: 8.5
+            php_detail_version: 8.5.10
+            lsphp_version: lsphp85
+            php_tag_version: latest
+            oci_version: "1"
+            deprecated: false
+          - version: 8.5
+            php_detail_version: 8.5.10
+            lsphp_version: lsphp85
+            php_tag_version: php85
+            oci_version: "1"
+            deprecated: false
+          - version: 8.4
+            php_detail_version: 8.4.25
+            lsphp_version: lsphp84
+            php_tag_version: php84
+            oci_version: "1"
+            deprecated: false
+          - version: 8.3
+            php_detail_version: 8.3.33
+            lsphp_version: lsphp83
+            php_tag_version: php83
+            oci_version: "1"
+            deprecated: false
+        php_extensions:
+          - name: "base"
+            experimental: false
+          - name: "xdebug"
+            experimental: true
+          - name: "pcov"
+            experimental: true
+          - name: "oci"
+            experimental: false
+          - name: "oci-xdebug"
+            experimental: true
+          - name: "oci-pcov"
+            experimental: true
+
+      fail-fast: false
+    steps:
+      - name: Prepare
+        run: |
+          platform=${{ matrix.arch.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get & Set Container Metadata
+        id: meta-packages
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            ${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}
+            type=raw,value=latest,enable=${{ matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
+
+      - name: Build & Push
+        id: build-and-push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./docker-lsphp
+          platforms: ${{ matrix.arch.platform }}
+          outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
+          labels: ${{ steps.meta-packages.outputs.labels }}
+          target: ${{ matrix.php_extensions.name }}
+          build-args: |
+            BASEIMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:base
+            LS_VERSION=${{ matrix.php_version.lsphp_version }}
+            PHP_VERSION=${{ matrix.php_version.version }}
+            PHP_DETAIL_VERSION=${{ matrix.php_version.php_detail_version }}
+            OCI_VERSION=${{ matrix.php_version.oci_version }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-${{ env.PLATFORM_PAIR }}
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-${{ env.PLATFORM_PAIR }},mode=max
+      - name: Export digest
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          digest="${{ steps.build-and-push.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-build-lsphp-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+  build-lsphp-merge:
+    runs-on: ubuntu-latest
+    needs: build-lsphp
+    permissions:
+      contents: read
+      packages: write
+    continue-on-error: ${{ matrix.php_version.deprecated || matrix.php_extensions.experimental }}
+    strategy:
+      fail-fast: false
       matrix:
         php_version:
           - version: 8.5
@@ -65,23 +176,25 @@ jobs:
             experimental: true
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@v4
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-build-lsphp-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-*
+          merge-multiple: true
       - name: Login to Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
       - name: Get & Set Container Metadata
         id: meta-packages
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -89,20 +202,11 @@ jobs:
             ${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}
             type=raw,value=latest,enable=${{ matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
 
-      - name: Build & Push
-        id: build-and-push
-        uses: docker/build-push-action@v7
-        with:
-          context: ./docker-lsphp
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta-packages.outputs.tags }}
-          labels: ${{ steps.meta-packages.outputs.labels }}
-          target: ${{ matrix.php_extensions.name }}
-          build-args: |
-            BASEIMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:base
-            LS_VERSION=${{ matrix.php_version.lsphp_version }}
-            PHP_VERSION=${{ matrix.php_version.version }}
-            PHP_DETAIL_VERSION=${{ matrix.php_version.php_detail_version }}
-            OCI_VERSION=${{ matrix.php_version.oci_version }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@sha256:%s ' *)
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect "$(jq -r '.tags[0]' <<< "$DOCKER_METADATA_OUTPUT_JSON")"

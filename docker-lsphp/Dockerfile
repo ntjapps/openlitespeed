@@ -92,6 +92,13 @@ FROM base AS oci
 ARG ORACLE_VERSION=21.23.0.0.0
 ARG ORACLE_SIMPLE_VERSION=2123000
 ARG ORACLE_ZIP_DIR=instantclient_21_23
+# Instant Client 21 has no Linux arm64 build; arm64 images get 19.x, the
+# newest line Oracle ships for aarch64. /usr/oracle/instantclient points at
+# whichever one was installed.
+ARG ORACLE_ARM64_VERSION=19.32.0.0.0
+ARG ORACLE_ARM64_SIMPLE_VERSION=1932000
+ARG ORACLE_ARM64_ZIP_DIR=instantclient_19_32
+ARG TARGETARCH
 ARG OCI_VERSION=3.4.1
 
 # Install Oracle Instant Client
@@ -101,26 +108,31 @@ RUN if apt-cache show libaio1t64 >/dev/null 2>&1; then aio=libaio1t64; else aio=
     for so in /usr/lib/*/libaio.so.1t64; do \
         [ -e "$so" ] && [ ! -e "$(dirname "$so")/libaio.so.1" ] && ln -s "$so" "$(dirname "$so")/libaio.so.1" || true; \
     done && \
-    curl https://download.oracle.com/otn_software/linux/instantclient/${ORACLE_SIMPLE_VERSION}/instantclient-basic-linux.x64-${ORACLE_VERSION}dbru.zip --output /usr/oracle/oic.zip && \
-    curl https://download.oracle.com/otn_software/linux/instantclient/${ORACLE_SIMPLE_VERSION}/instantclient-sdk-linux.x64-${ORACLE_VERSION}dbru.zip --output /usr/oracle/sdk.zip && \
+    case "${TARGETARCH:-amd64}" in \
+        arm64) ic_arch=arm64; ic_ver=${ORACLE_ARM64_VERSION}; ic_simple=${ORACLE_ARM64_SIMPLE_VERSION}; ic_dir=${ORACLE_ARM64_ZIP_DIR} ;; \
+        *) ic_arch=x64; ic_ver=${ORACLE_VERSION}; ic_simple=${ORACLE_SIMPLE_VERSION}; ic_dir=${ORACLE_ZIP_DIR} ;; \
+    esac && \
+    curl https://download.oracle.com/otn_software/linux/instantclient/${ic_simple}/instantclient-basic-linux.${ic_arch}-${ic_ver}dbru.zip --output /usr/oracle/oic.zip && \
+    curl https://download.oracle.com/otn_software/linux/instantclient/${ic_simple}/instantclient-sdk-linux.${ic_arch}-${ic_ver}dbru.zip --output /usr/oracle/sdk.zip && \
     cd /usr/oracle && \
     unzip -o oic.zip && \
     unzip -o sdk.zip && \
+    ln -sfn /usr/oracle/${ic_dir} /usr/oracle/instantclient && \
     rm -f oic.zip && \
     rm -f sdk.zip && \
     apt-get autoclean -y && \
-    echo /usr/oracle/${ORACLE_ZIP_DIR} > /etc/ld.so.conf.d/oracle-instantclient.conf && \
+    echo /usr/oracle/instantclient > /etc/ld.so.conf.d/oracle-instantclient.conf && \
     ldconfig && \
-    ! ldd /usr/oracle/${ORACLE_ZIP_DIR}/libclntsh.so | grep 'not found'
+    ! ldd /usr/oracle/instantclient/libclntsh.so | grep 'not found'
     
 COPY ./php.d/20-pdo_oci.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-pdo_oci.ini
 
 RUN if [ "${OCI_VERSION}" != "1.0" && "${OCI_VERSION}" != "1" ]; then \
-        yes "instantclient,/usr/oracle/${ORACLE_ZIP_DIR}" | pecl install oci8-${OCI_VERSION}; \
+        yes "instantclient,/usr/oracle/instantclient" | pecl install oci8-${OCI_VERSION}; \
         rm -f /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-pdo_oci.ini; \
     else \
-        yes "instantclient,/usr/oracle/${ORACLE_ZIP_DIR}" | pecl install oci8; \
-        yes "instantclient,/usr/oracle/${ORACLE_ZIP_DIR}" | pecl install pdo_oci || rm -f /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-pdo_oci.ini; \
+        yes "instantclient,/usr/oracle/instantclient" | pecl install oci8; \
+        yes "instantclient,/usr/oracle/instantclient" | pecl install pdo_oci || rm -f /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-pdo_oci.ini; \
     fi
 
 COPY ./php.d/20-oci8.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-oci8.ini
