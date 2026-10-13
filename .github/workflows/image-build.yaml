@@ -32,25 +32,25 @@ jobs:
             runner: ubuntu-24.04-arm
         php_version:
           - version: 8.5
-            php_detail_version: 8.5.10
+            php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: latest
             oci_version: "1"
             deprecated: false
           - version: 8.5
-            php_detail_version: 8.5.10
+            php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: php85
             oci_version: "1"
             deprecated: false
           - version: 8.4
-            php_detail_version: 8.4.25
+            php_detail_version: 8.4.26
             lsphp_version: lsphp84
             php_tag_version: php84
             oci_version: "1"
             deprecated: false
           - version: 8.3
-            php_detail_version: 8.3.33
+            php_detail_version: 8.3.35
             lsphp_version: lsphp83
             php_tag_version: php83
             oci_version: "1"
@@ -138,25 +138,25 @@ jobs:
       matrix:
         php_version:
           - version: 8.5
-            php_detail_version: 8.5.10
+            php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: latest
             oci_version: "1"
             deprecated: false
           - version: 8.5
-            php_detail_version: 8.5.10
+            php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: php85
             oci_version: "1"
             deprecated: false
           - version: 8.4
-            php_detail_version: 8.4.25
+            php_detail_version: 8.4.26
             lsphp_version: lsphp84
             php_tag_version: php84
             oci_version: "1"
             deprecated: false
           - version: 8.3
-            php_detail_version: 8.3.33
+            php_detail_version: 8.3.35
             lsphp_version: lsphp83
             php_tag_version: php83
             oci_version: "1"
