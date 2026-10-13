@@ -10,7 +10,7 @@ name: Codacy Security Scan
 
 on:
   push:
-    branches: ["*"]
+    branches: ["dev", "main"]
 
 permissions:
   contents: read
