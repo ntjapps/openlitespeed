@@ -95,6 +95,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Select base image
+        id: base-image
+        # Release refs build on :base. Other refs prefer their own branch-<ref>-base tag (built by the base
+        # workflow from the same ref) and fall back to :base when that tag does not exist.
+        run: |
+          base="${REGISTRY}/${IMAGE_NAME}:base"
+          if [ "${IS_RELEASE_REF}" != "true" ]; then
+            slug="$(printf '%s' "${GITHUB_REF_NAME}" | sed -E 's/[^A-Za-z0-9._-]+/-/g')"
+            candidate="${REGISTRY}/${IMAGE_NAME}:branch-${slug}-base"
+            if docker buildx imagetools inspect "${candidate}" > /dev/null 2>&1; then
+              base="${candidate}"
+            fi
+          fi
+          echo "Using base image ${base}"
+          echo "image=${base}" >> "$GITHUB_OUTPUT"
+
       - name: Get & Set Container Metadata
         id: meta-packages
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
@@ -116,7 +132,7 @@ jobs:
           labels: ${{ steps.meta-packages.outputs.labels }}
           target: ${{ matrix.php_extensions.name }}
           build-args: |
-            BASEIMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:base
+            BASEIMAGE=${{ steps.base-image.outputs.image }}
             LS_VERSION=${{ matrix.php_version.lsphp_version }}
             PHP_VERSION=${{ matrix.php_version.version }}
             PHP_DETAIL_VERSION=${{ matrix.php_version.php_detail_version }}

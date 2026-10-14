@@ -64,6 +64,9 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./docker-base
+          build-args: |
+            OLS_VERSION=${{ vars.OLS_VERSION }}
+            OLS_REPO_SCRIPT_SHA256=${{ vars.OLS_REPO_SCRIPT_SHA256 }}
           platforms: ${{ matrix.arch.platform }}
           outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
           labels: ${{ steps.meta-packages.outputs.labels }}
