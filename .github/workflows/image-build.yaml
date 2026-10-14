@@ -12,7 +12,13 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
+  # Floating tags (latest, base, php85-*, ...) are published only from the default branch and v* tags.
+  # Every other ref (dev, manual dispatch from a feature branch) gets branch-<name>-<target> tags only.
+  IS_RELEASE_REF: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   PACKAGE_NAME: ${{ github.repository_owner }}/${{ vars.IMAGE_NAME }}
@@ -78,7 +84,7 @@ jobs:
           platform=${{ matrix.arch.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -96,8 +102,9 @@ jobs:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            ${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}
-            type=raw,value=latest,enable=${{ matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
+            type=raw,value=${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }},enable=${{ env.IS_RELEASE_REF == 'true' }}
+            type=raw,value=latest,enable=${{ env.IS_RELEASE_REF == 'true' && matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
+            type=ref,event=branch,prefix=branch-,suffix=-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }},enable=${{ env.IS_RELEASE_REF != 'true' }}
 
       - name: Build & Push
         id: build-and-push
@@ -122,7 +129,7 @@ jobs:
           digest="${{ steps.build-and-push.outputs.digest }}"
           touch "${{ runner.temp }}/digests/${digest#sha256:}"
       - name: Upload digest
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: digests-build-lsphp-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-${{ env.PLATFORM_PAIR }}
           path: ${{ runner.temp }}/digests/*
@@ -179,7 +186,7 @@ jobs:
 
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           path: ${{ runner.temp }}/digests
           pattern: digests-build-lsphp-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-*
@@ -201,8 +208,9 @@ jobs:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            ${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}
-            type=raw,value=latest,enable=${{ matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
+            type=raw,value=${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }},enable=${{ env.IS_RELEASE_REF == 'true' }}
+            type=raw,value=latest,enable=${{ env.IS_RELEASE_REF == 'true' && matrix.php_version.php_tag_version == 'latest' && matrix.php_extensions.name == 'base' }}
+            type=ref,event=branch,prefix=branch-,suffix=-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }},enable=${{ env.IS_RELEASE_REF != 'true' }}
 
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
