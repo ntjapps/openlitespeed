@@ -1,8 +1,8 @@
 name: Container Image Build Base Image
 
+# Manual-only: automatic triggers removed; run via workflow_dispatch (Actions tab or gh workflow run).
+# Floating tags are published only when run on branch main or a v* tag ref; other refs get branch-<name>-* tags.
 on:
-  schedule:
-    - cron: "0 0 1 * *" # Run at 00:00 on the first day of the month
   workflow_dispatch:
 
 permissions:
