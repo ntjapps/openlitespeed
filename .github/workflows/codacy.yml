@@ -8,9 +8,9 @@
 
 name: Codacy Security Scan
 
+# Manual-only: automatic triggers removed; run via workflow_dispatch (Actions tab or gh workflow run).
 on:
-  push:
-    branches: ["dev", "main"]
+  workflow_dispatch:
 
 permissions:
   contents: read
