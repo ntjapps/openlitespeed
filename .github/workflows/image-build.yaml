@@ -1,15 +1,8 @@
 name: Container Image Build
 
+# Manual-only: automatic triggers removed; run via workflow_dispatch (Actions tab or gh workflow run).
+# Floating tags are published only when run on branch main or a v* tag ref; other refs get branch-<name>-* tags.
 on:
-  schedule:
-    - cron: "0 1 1 * *" # Run at 00:00 on the first day of the month
-  push:
-    # Build only on the integration and default branches; never on PR/feature branches.
-    branches:
-      - dev
-      - main
-    tags:
-      - "v*.*.*"
   workflow_dispatch:
 
 permissions:
