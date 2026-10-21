@@ -36,25 +36,21 @@ jobs:
             php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: latest
-            oci_version: "1"
             deprecated: false
           - version: 8.5
             php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: php85
-            oci_version: "1"
             deprecated: false
           - version: 8.4
             php_detail_version: 8.4.26
             lsphp_version: lsphp84
             php_tag_version: php84
-            oci_version: "1"
             deprecated: false
           - version: 8.3
             php_detail_version: 8.3.35
             lsphp_version: lsphp83
             php_tag_version: php83
-            oci_version: "1"
             deprecated: false
         php_extensions:
           - name: "base"
@@ -129,7 +125,6 @@ jobs:
             LS_VERSION=${{ matrix.php_version.lsphp_version }}
             PHP_VERSION=${{ matrix.php_version.version }}
             PHP_DETAIL_VERSION=${{ matrix.php_version.php_detail_version }}
-            OCI_VERSION=${{ matrix.php_version.oci_version }}
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-${{ env.PLATFORM_PAIR }}
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache-${{ matrix.php_version.php_tag_version }}-${{ matrix.php_extensions.name }}-${{ env.PLATFORM_PAIR }},mode=max
       - name: Export digest
@@ -159,25 +154,21 @@ jobs:
             php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: latest
-            oci_version: "1"
             deprecated: false
           - version: 8.5
             php_detail_version: 8.5.11
             lsphp_version: lsphp85
             php_tag_version: php85
-            oci_version: "1"
             deprecated: false
           - version: 8.4
             php_detail_version: 8.4.26
             lsphp_version: lsphp84
             php_tag_version: php84
-            oci_version: "1"
             deprecated: false
           - version: 8.3
             php_detail_version: 8.3.35
             lsphp_version: lsphp83
             php_tag_version: php83
-            oci_version: "1"
             deprecated: false
         php_extensions:
           - name: "base"
