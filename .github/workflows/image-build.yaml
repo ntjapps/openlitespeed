@@ -33,22 +33,22 @@ jobs:
             runner: ubuntu-24.04-arm
         php_version:
           - version: 8.5
-            php_detail_version: 8.5.11
+            php_detail_version: 8.5.12
             lsphp_version: lsphp85
             php_tag_version: latest
             deprecated: false
           - version: 8.5
-            php_detail_version: 8.5.11
+            php_detail_version: 8.5.12
             lsphp_version: lsphp85
             php_tag_version: php85
             deprecated: false
           - version: 8.4
-            php_detail_version: 8.4.26
+            php_detail_version: 8.4.27
             lsphp_version: lsphp84
             php_tag_version: php84
             deprecated: false
           - version: 8.3
-            php_detail_version: 8.3.35
+            php_detail_version: 8.3.36
             lsphp_version: lsphp83
             php_tag_version: php83
             deprecated: false
@@ -151,22 +151,22 @@ jobs:
       matrix:
         php_version:
           - version: 8.5
-            php_detail_version: 8.5.11
+            php_detail_version: 8.5.12
             lsphp_version: lsphp85
             php_tag_version: latest
             deprecated: false
           - version: 8.5
-            php_detail_version: 8.5.11
+            php_detail_version: 8.5.12
             lsphp_version: lsphp85
             php_tag_version: php85
             deprecated: false
           - version: 8.4
-            php_detail_version: 8.4.26
+            php_detail_version: 8.4.27
             lsphp_version: lsphp84
             php_tag_version: php84
             deprecated: false
           - version: 8.3
-            php_detail_version: 8.3.35
+            php_detail_version: 8.3.36
             lsphp_version: lsphp83
             php_tag_version: php83
             deprecated: false
