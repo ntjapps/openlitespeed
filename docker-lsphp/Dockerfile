@@ -9,12 +9,19 @@ ARG PHP_DETAIL_VERSION
 
 # Pinned PECL extension versions (all support PHP 8.3 - 8.5). See README "Pinned extension versions".
 # Override per PHP version with --build-arg when one of them stops supporting a PHP release.
+# *_SHA256 is the sha256 of the fallback download used when pecl.php.net is down (URLs in the RUN steps below).
 ARG REDIS_VERSION=6.3.0
+ARG REDIS_SHA256=cb8f81df1a275599e4f8ddcfec7e1f65ed1953e6f5673649149fd680ebff4cad
 ARG MONGODB_VERSION=2.5.5
+ARG MONGODB_SHA256=0eaf84ff709f73183d80597f31ff02937f6aefde01eb895a0aa19334a290cec0
 ARG SWOOLE_VERSION=6.2.3
+ARG SWOOLE_SHA256=dde8d2a4a6b5c5cd418aedd8561760baad59767a2f8a963b2c0e9eb9c86f4c8d
 ARG PCOV_VERSION=1.0.12
+ARG PCOV_SHA256=fdd07cad8e2ff42f0c9f095d84aeef11dab0fde7a008805f61883cbcb1b3f12b
 ARG XDEBUG_VERSION=3.5.3
+ARG XDEBUG_SHA256=f073de91bea046106abf4d6071c963ea71e58571df6ce58948ceca89d121cb2d
 ARG OCI_VERSION=3.4.1
+ARG OCI_SHA256=c6d612bc750d551dfc15b969346f6a67167f4441f08943adaa3e7fda5d90dd2b
 
 # Retrying PECL installer with a non-pecl.php.net fallback (see the script header)
 COPY --chmod=0755 ./pecl-install.sh /usr/local/bin/pecl-install
@@ -38,7 +45,7 @@ RUN php -v && \
 FROM base-ols AS base-php-redis
 
 # Install Base PHP Extensions
-RUN pecl-install redis "${REDIS_VERSION}" "https://github.com/phpredis/phpredis/archive/refs/tags/${REDIS_VERSION}.tar.gz" && \
+RUN pecl-install redis "${REDIS_VERSION}" "https://github.com/phpredis/phpredis/archive/refs/tags/${REDIS_VERSION}.tar.gz" "${REDIS_SHA256}" && \
     apt-get autoclean -y
 
 COPY ./php.d/20-redis.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-redis.ini
@@ -49,7 +56,7 @@ RUN php -v && \
 
 FROM base-php-redis AS base-php-mongodb
 
-RUN pecl-install mongodb "${MONGODB_VERSION}" "https://github.com/mongodb/mongo-php-driver/releases/download/${MONGODB_VERSION}/mongodb-${MONGODB_VERSION}.tgz" && \
+RUN pecl-install mongodb "${MONGODB_VERSION}" "https://github.com/mongodb/mongo-php-driver/releases/download/${MONGODB_VERSION}/mongodb-${MONGODB_VERSION}.tgz" "${MONGODB_SHA256}" && \
     apt-get autoclean -y
 
 COPY ./php.d/20-mongodb.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-mongodb.ini
@@ -68,7 +75,7 @@ COPY ./php.d/20-swoole.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/
 RUN apt-get install -y --no-install-recommends pkg-config libbrotli-dev && \
     apt-mark manual libbrotli1 > /dev/null && \
     if FALLBACK_CONFIGURE_ARGS="--enable-brotli" \
-       pecl-install swoole "${SWOOLE_VERSION}" "https://github.com/swoole/swoole-src/archive/refs/tags/v${SWOOLE_VERSION}.tar.gz"; then \
+       pecl-install swoole "${SWOOLE_VERSION}" "https://github.com/swoole/swoole-src/archive/refs/tags/v${SWOOLE_VERSION}.tar.gz" "${SWOOLE_SHA256}"; then \
         ! ldd "$(php -r 'echo ini_get("extension_dir");')/swoole.so" | grep 'not found'; \
     else \
         echo "WARNING: swoole ${SWOOLE_VERSION} could not be installed, building the image without it" >&2; \
@@ -86,7 +93,7 @@ FROM base AS pcov
 
 # Install PCOV
 RUN FALLBACK_CONFIGURE_ARGS="--enable-pcov" \
-    pecl-install pcov "${PCOV_VERSION}" "https://github.com/krakjoe/pcov/archive/refs/tags/v${PCOV_VERSION}.tar.gz" && \
+    pecl-install pcov "${PCOV_VERSION}" "https://github.com/krakjoe/pcov/archive/refs/tags/v${PCOV_VERSION}.tar.gz" "${PCOV_SHA256}" && \
     apt-get autoclean -y
 
 COPY ./php.d/99-pcov.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/99-pcov.ini
@@ -99,7 +106,7 @@ RUN php -v && \
 FROM base AS xdebug
 
 # Install XDEBUG
-RUN pecl-install xdebug "${XDEBUG_VERSION}" "https://xdebug.org/files/xdebug-${XDEBUG_VERSION}.tgz" && \
+RUN pecl-install xdebug "${XDEBUG_VERSION}" "https://xdebug.org/files/xdebug-${XDEBUG_VERSION}.tgz" "${XDEBUG_SHA256}" && \
     apt-get autoclean -y
 
 COPY ./php.d/99-xdebug.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/99-xdebug.ini
@@ -148,7 +155,7 @@ RUN if apt-cache show libaio1t64 >/dev/null 2>&1; then aio=libaio1t64; else aio=
     
 # oci8 only (pdo_oci is not a PECL package). Fails the build if oci8 cannot be installed.
 RUN PECL_ANSWER="instantclient,/usr/oracle/instantclient" \
-    pecl-install oci8 "${OCI_VERSION}" "https://github.com/php/pecl-database-oci8/releases/download/v${OCI_VERSION}/oci8-${OCI_VERSION}.tgz"
+    pecl-install oci8 "${OCI_VERSION}" "https://github.com/php/pecl-database-oci8/releases/download/v${OCI_VERSION}/oci8-${OCI_VERSION}.tgz" "${OCI_SHA256}"
 
 COPY ./php.d/20-oci8.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/20-oci8.ini
 
@@ -161,7 +168,7 @@ FROM oci AS oci-pcov
 
 # Install PCOV
 RUN FALLBACK_CONFIGURE_ARGS="--enable-pcov" \
-    pecl-install pcov "${PCOV_VERSION}" "https://github.com/krakjoe/pcov/archive/refs/tags/v${PCOV_VERSION}.tar.gz" && \
+    pecl-install pcov "${PCOV_VERSION}" "https://github.com/krakjoe/pcov/archive/refs/tags/v${PCOV_VERSION}.tar.gz" "${PCOV_SHA256}" && \
     apt-get autoclean -y
 
 COPY ./php.d/99-pcov.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/99-pcov.ini
@@ -174,7 +181,7 @@ RUN php -v && \
 FROM oci AS oci-xdebug
 
 # Install XDEBUG
-RUN pecl-install xdebug "${XDEBUG_VERSION}" "https://xdebug.org/files/xdebug-${XDEBUG_VERSION}.tgz" && \
+RUN pecl-install xdebug "${XDEBUG_VERSION}" "https://xdebug.org/files/xdebug-${XDEBUG_VERSION}.tgz" "${XDEBUG_SHA256}" && \
     apt-get autoclean -y
 
 COPY ./php.d/99-xdebug.ini /usr/local/lsws/${LS_VERSION}/etc/php/${PHP_VERSION}/mods-available/99-xdebug.ini

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Install a pinned PECL extension, surviving pecl.php.net outages.
 #
-# Usage: pecl-install <name> <version> [fallback-url]
+# Usage: pecl-install <name> <version> [fallback-url sha256]
 #   PECL_ANSWER   optional answer fed to pecl's configure prompts (e.g. oci8's instantclient path)
 #   FALLBACK_CONFIGURE_ARGS configure flags for a source-archive fallback (e.g. --enable-pcov)
 #   PECL_ATTEMPTS number of pecl.php.net attempts before falling back (default 4)
@@ -12,12 +12,15 @@
 #    install it from disk. The URL is either a ready-made PECL release tarball (package.xml at
 #    the archive root, installed with `pecl install <file>`) or a plain GitHub source archive,
 #    which is built with phpize/configure/make (extra configure flags in FALLBACK_CONFIGURE_ARGS).
+#    The download is verified against the given sha256 before anything is extracted or built;
+#    a mismatch (or a fallback URL without a sha256) fails the install.
 # Fails (non-zero) when the extension .so is not present afterwards.
 set -eu
 
-name=${1:?usage: pecl-install <name> <version> [fallback-url]}
-version=${2:?usage: pecl-install <name> <version> [fallback-url]}
+name=${1:?usage: pecl-install <name> <version> [fallback-url sha256]}
+version=${2:?usage: pecl-install <name> <version> [fallback-url sha256]}
 fallback=${3:-}
+fallback_sha256=${4:-}
 attempts=${PECL_ATTEMPTS:-4}
 ext_dir=$(php -r 'echo ini_get("extension_dir");')
 
@@ -51,11 +54,20 @@ if [ -z "$fallback" ]; then
     exit 1
 fi
 
+if [ -z "$fallback_sha256" ]; then
+    echo "pecl-install: refusing fallback download without a sha256" >&2
+    exit 1
+fi
+
 echo "pecl-install: falling back to ${fallback}" >&2
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 curl -fsSL --proto '=https' --proto-redir '=https' --retry 5 --retry-all-errors --retry-delay 5 \
     -o "${work}/src.tgz" "$fallback"
+if ! echo "${fallback_sha256}  ${work}/src.tgz" | sha256sum -c -; then
+    echo "pecl-install: sha256 mismatch for ${fallback} (expected ${fallback_sha256})" >&2
+    exit 1
+fi
 mkdir "${work}/x"
 tar -xzf "${work}/src.tgz" -C "${work}/x"
 if [ -f "${work}/x/package.xml" ]; then
