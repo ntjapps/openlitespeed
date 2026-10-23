@@ -24,6 +24,27 @@ abort_handler() {
 trap 'sigterm_handler' SIGTERM
 trap 'abort_handler' SIGINT INT
 
+# Render env-driven settings into the OLS config (idempotent, safe on container restarts).
+#   OLS_MAX_REQ_BODY_SIZE      max request body, e.g. 128M (default: whatever httpd_config.conf has)
+#   OLS_PHP_ENTRYPOINT_ONLY=1  front-controller apps (Laravel-style): only /index.php executes PHP
+# See README "Path filtering".
+CONF_DIR=/usr/local/lsws/conf
+if [ -n "${OLS_MAX_REQ_BODY_SIZE:-}" ]; then
+    if [[ "$OLS_MAX_REQ_BODY_SIZE" =~ ^[0-9]+[KkMmGg]?$ ]]; then
+        sed -i -E "s/^([[:space:]]*maxReqBodySize[[:space:]]+).*/\1${OLS_MAX_REQ_BODY_SIZE}/" "$CONF_DIR/httpd_config.conf"
+    else
+        echo "entrypoint: ignoring invalid OLS_MAX_REQ_BODY_SIZE='${OLS_MAX_REQ_BODY_SIZE}' (use e.g. 128M)" >&2
+    fi
+fi
+VHCONF="$CONF_DIR/vhosts/docker/vhconf.conf"
+if [ -f "$VHCONF" ]; then
+    if [ "${OLS_PHP_ENTRYPOINT_ONLY:-0}" = "1" ]; then
+        grep -qE '^#.*\(\?#phpentry\)' "$VHCONF" && sed -i -E '/\(\?#phpentry\)/ s/^#+//' "$VHCONF"
+    else
+        grep -qE '^[^#].*\(\?#phpentry\)' "$VHCONF" && sed -i -E '/\(\?#phpentry\)/ s/^/#/' "$VHCONF"
+    fi
+fi
+
 # run application if no ARGS / CMD
 if [ $# -eq 0 ]; then
     /usr/local/lsws/bin/litespeed
