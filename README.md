@@ -39,6 +39,40 @@ returns 504s) and then falls back to the checksum-verified download above, so a 
 matrix. A checksum mismatch, or a fallback without a checksum, fails the build. `swoole` and `pcov` build in the lsphp
 stage with `pkg-config` and `libbrotli-dev`, which are purged afterwards (`debian:13-slim` ships no `pkg-config`).
 
+## Path filtering and request limits
+
+The `docker` vhost (port 80, scripts enabled) and the `static` vhost (port 8080, no scripts) carry vhost-level rewrite rules
+in `docker-base/lsws-conf/vhosts/*/vhconf.conf`. They run before any `.htaccess` (context) rules and answer `404`
+(not 403, so a scanner cannot tell a blocked path from a missing one):
+
+| Rule | `docker` vhost | `static` vhost |
+| --- | --- | --- |
+| Dotfiles and dot-directories (`/.env`, `/.git/...`, `/.htaccess`, `/a/.hidden`, also `//.env`, `/%2eenv`), except `/.well-known/` (ACME, `assetlinks.json`, `apple-app-site-association`; a dot segment inside it, e.g. `/.well-known/../.env`, is still blocked) | yes | yes |
+| PHP-like files (`.php .phtml .phar .phps .inc .php5`...) | only under `/vendor/`, always; everywhere except `/index.php` when `OLS_PHP_ENTRYPOINT_ONLY=1` | all (the vhost never executes scripts, so they would be served as source) |
+| `composer.json/.lock`, `package.json`, `package-lock.json`, `installed.json`, `artisan`, `*.sql *.bak *.old *.orig *.swp *.log *.sh *.ini` | yes | yes |
+
+Request body: `maxReqBodySize` is `128M` (was `2047M`); PHP's own limit in the lsphp images is 100M
+(`docker-lsphp/php.d/max-file-upload.ini`).
+
+Overrides (container env, applied by `docker-base/entrypoint.sh` when the container starts; OLS config has no env
+substitution, so the entrypoint edits the config in place, idempotently, and needs it writable):
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `OLS_PHP_ENTRYPOINT_ONLY` | unset (off) | `1` = front-controller mode for Laravel-style apps: only `/index.php` (with or without PATH_INFO) executes PHP, any other `*.php` request is a 404. Leave it off for WordPress, Moodle and other legacy multi-file PHP apps: they execute many `.php` files (`wp-login.php`, `wp-admin/*.php`, ...). |
+| `OLS_MAX_REQ_BODY_SIZE` | `128M` | Max request body (`512K`, `256M`, `1G`; digits plus an optional K/M/G). Invalid values are ignored with a message. OLS rejects larger bodies with 413. |
+
+Which apps use this image (checked in `stack-config`): `itdp-wp` (WordPress on `ghcr.io/ntjapps/openlitespeed:php85-base`),
+so the default (legacy-safe) mode applies. The `ntj125app/openlitespeed:php74-gbika-base` / `php82-gbika-base` images used by
+the gka-stack-config swarm stacks are a different, older image and are not affected by this repo.
+
+Test (no build; runs the image with this repo's config bind-mounted over a fixture docroot, capped containers on random ports):
+
+```sh
+tests/test-paths.sh                  # IMAGE=ghcr.io/ntjapps/openlitespeed:php85-base by default
+IMAGE=my/image:tag tests/test-paths.sh
+```
+
 ## Updates
 
 28 Sep 2026
