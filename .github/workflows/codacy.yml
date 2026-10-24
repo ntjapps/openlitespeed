@@ -47,6 +47,6 @@ jobs:
           jq '.runs |= (to_entries | map(.value.automationDetails.id = "codacy-run-\(.key)" | .value))' results.sarif > results.fixed.sarif && mv results.fixed.sarif results.sarif
 
       - name: Upload SARIF results file
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: results.sarif
