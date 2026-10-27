@@ -19,7 +19,7 @@ file. All of them support PHP 8.3 - 8.5. Each pin has a matching `<EXT>_SHA256`:
 | --- | --- | --- | --- |
 | `REDIS_VERSION` / `REDIS_SHA256` | 6.3.0 | GitHub `archive/refs/tags/<ver>.tar.gz` (generated archive, hash stable in practice) | |
 | `MONGODB_VERSION` / `MONGODB_SHA256` | 2.5.5 | GitHub release asset `mongodb-<ver>.tgz` (release page shows the digest) | |
-| `SWOOLE_VERSION` / `SWOOLE_SHA256` | 6.2.3 | GitHub `archive/refs/tags/v<ver>.tar.gz` (generated archive) | optional: the image is built without swoole if it cannot be installed (a warning is printed) |
+| `SWOOLE_VERSION` / `SWOOLE_SHA256` | 6.2.4 | GitHub `archive/refs/tags/v<ver>.tar.gz` (generated archive) | optional: the image is built without swoole if it cannot be installed (a warning is printed) |
 | `PCOV_VERSION` / `PCOV_SHA256` | 1.0.12 | GitHub `archive/refs/tags/v<ver>.tar.gz` (generated archive) | pcov / oci-pcov variants |
 | `XDEBUG_VERSION` / `XDEBUG_SHA256` | 3.5.3 | `https://xdebug.org/files/xdebug-<ver>.tgz` (hash listed on https://xdebug.org/download/historical) | xdebug / oci-xdebug variants; 3.5.x is the line that supports PHP 8.5 |
 | `OCI_VERSION` / `OCI_SHA256` | 3.4.1 | GitHub release asset `oci8-<ver>.tgz` (release page shows the digest) | oci variants; oci8 3.4.x needs PHP 8.2+ (PHP 8.1 would need 3.2.1). `pdo_oci` is not a PECL package and is not installed |
