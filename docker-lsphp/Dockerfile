@@ -27,7 +27,7 @@ ARG OCI_SHA256=c6d612bc750d551dfc15b969346f6a67167f4441f08943adaa3e7fda5d90dd2b
 COPY --chmod=0755 ./pecl-install.sh /usr/local/bin/pecl-install
 
 # Install Base PHP (Removed: bz2, calendar, enchant, excimer, ftp, gettext, imap, ldap, lexbor, memcached, pdo_dblib, pspell, readline, snmp, soap, sysvmsg, sysvsem, tidy, xsl)
-RUN apt-get install -y ${LS_VERSION} ${LS_VERSION}-common ${LS_VERSION}-curl ${LS_VERSION}-dbg ${LS_VERSION}-dev ${LS_VERSION}-intl ${LS_VERSION}-modules-source ${LS_VERSION}-mysql ${LS_VERSION}-pgsql ${LS_VERSION}-sqlite3 && \
+RUN apt-get update && apt-get install -y ${LS_VERSION} ${LS_VERSION}-common ${LS_VERSION}-curl ${LS_VERSION}-dbg ${LS_VERSION}-dev ${LS_VERSION}-intl ${LS_VERSION}-modules-source ${LS_VERSION}-mysql ${LS_VERSION}-pgsql ${LS_VERSION}-sqlite3 && \
     if apt-cache show ${LS_VERSION}-opcache > /dev/null 2>&1; then apt-get install -y ${LS_VERSION}-opcache; fi && \
     apt-get autoclean -y && \
     ln -sf /usr/local/lsws/${LS_VERSION}/bin/php /usr/bin/php && \
