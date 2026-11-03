@@ -25,9 +25,9 @@ jobs:
       matrix:
         arch:
           - platform: linux/amd64
-            runner: ubuntu-latest
+            runner: blacksmith-2vcpu-ubuntu-2404
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: blacksmith-2vcpu-ubuntu-2404-arm
     permissions:
       contents: read
       packages: write
@@ -86,7 +86,7 @@ jobs:
           retention-days: 1
   build-base-merge:
     if: ${{ github.event_name != 'pull_request' }}
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     needs: build-base
     permissions:
       contents: read

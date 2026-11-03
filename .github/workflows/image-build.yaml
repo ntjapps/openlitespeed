@@ -28,9 +28,9 @@ jobs:
       matrix:
         arch:
           - platform: linux/amd64
-            runner: ubuntu-latest
+            runner: blacksmith-2vcpu-ubuntu-2404
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            runner: blacksmith-2vcpu-ubuntu-2404-arm
         php_version:
           - version: 8.5
             php_detail_version: 8.5.12
@@ -140,7 +140,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   build-lsphp-merge:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     needs: build-lsphp
     permissions:
       contents: read
