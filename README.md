@@ -48,7 +48,7 @@ in `docker-base/lsws-conf/vhosts/*/vhconf.conf`. They run before any `.htaccess`
 | Rule | `docker` vhost | `static` vhost |
 | --- | --- | --- |
 | Dotfiles and dot-directories (`/.env`, `/.git/...`, `/.htaccess`, `/a/.hidden`, also `//.env`, `/%2eenv`), except `/.well-known/` (ACME, `assetlinks.json`, `apple-app-site-association`; a dot segment inside it, e.g. `/.well-known/../.env`, is still blocked) | yes | yes |
-| PHP-like files (`.php .phtml .phar .phps .inc .php5`...) | only under `/vendor/`, always; everywhere except `/index.php` when `OLS_PHP_ENTRYPOINT_ONLY=1` | all (the vhost never executes scripts, so they would be served as source) |
+| PHP-like files (`.php .phtml .phar .phps .inc .php5`...) | only under `/vendor/` and `/storage/`, always; everywhere except `/index.php` when `OLS_PHP_ENTRYPOINT_ONLY=1` | all (the vhost never executes scripts, so they would be served as source) |
 | `composer.json/.lock`, `package.json`, `package-lock.json`, `installed.json`, `artisan`, `*.sql *.bak *.old *.orig *.swp *.log *.sh *.ini` | yes | yes |
 
 Request body: `maxReqBodySize` is `128M` (was `2047M`); PHP's own limit in the lsphp images is 100M

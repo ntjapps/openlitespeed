@@ -64,7 +64,7 @@ check() { # port expected_status path [curl args...]
 
 always_blocked() {
   for p in /.env /.env.production /.git/config /nested/.env //.env /%2eenv /.well-known/.hidden /.well-known/../.env \
-           /vendor/autoload.php /VENDOR/AUTOLOAD.PHP /composer.json /db.sql; do
+           /vendor/autoload.php /VENDOR/AUTOLOAD.PHP /storage/x.php /STORAGE/X.PHP /storage/x.php/y /composer.json /db.sql; do
     check "$PORT" 404 "$p"
   done
   check "$PORT" 200 /index.php
@@ -80,7 +80,6 @@ start
 always_blocked
 check "$PORT" 200 /foo.php
 check "$PORT" 200 /wp-admin/admin.php
-check "$PORT" 200 /storage/x.php
 body="$(curl -s "http://127.0.0.1:$PORT/index.php")"
 [ "$body" = "index-ok:0" ] && echo "PASS index.php executed" || { echo "FAIL index.php body: $body"; FAILS=$((FAILS + 1)); }
 
@@ -97,7 +96,6 @@ check "$PORT" 404 /foo.php
 check "$PORT" 404 /FOO.PHP
 check "$PORT" 404 /foo.php/bar
 check "$PORT" 404 /wp-admin/admin.php
-check "$PORT" 404 /storage/x.php
 
 echo "== restart in the same container FS without the flag (entrypoint re-disables the rule)"
 start
