@@ -6,12 +6,16 @@
 version: 2
 updates:
   - package-ecosystem: "docker" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    directories: # one entry per Dockerfile directory (a Dockerfile in a subdirectory is not found from "/")
+      - "/docker-base"
+      - "/docker-lsphp"
+    target-branch: "dev"
     schedule:
       interval: "daily"
       timezone: "Asia/Jakarta"
   - package-ecosystem: "github-actions" # See documentation for possible values
     directory: "/" # Location of package manifests
+    target-branch: "dev"
     schedule:
       interval: "daily"
       timezone: "Asia/Jakarta"

@@ -1,4 +1,6 @@
-FROM debian:13-slim
+# Base pinned by digest (multi-arch index): `docker buildx imagetools inspect debian:13-slim`, copy the top-level "Digest:".
+# Dependabot (docker, target dev) opens a PR when the digest moves.
+FROM debian:13-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
 
 # Optional build args (CI passes them from the repo variables OLS_VERSION / OLS_REPO_SCRIPT_SHA256):
 #   OLS_VERSION                 exact apt version of the openlitespeed package (as listed by
@@ -24,6 +26,13 @@ RUN rm -f /entrypoint.sh && \
     apt-get autoclean -y && \
     apt-get install -y "openlitespeed${OLS_VERSION:+=${OLS_VERSION}}" && \
     if [ -z "${OLS_VERSION}" ]; then /usr/local/lsws/admin/misc/lsup.sh; fi && \
+    # WebAdmin: the shipped httpd_config.conf sets disableWebAdmin 1; as a second layer the package's admin listener
+    # (default *:7080) is bound to loopback so it is never reachable from the network even if that flag is ignored.
+    # The build fails if an admin listener still binds a non-loopback address.
+    if [ -f /usr/local/lsws/admin/conf/admin_config.conf ]; then \
+        sed -i -E 's/^([[:space:]]*address[[:space:]]+)(\*|0\.0\.0\.0|\[::\]):7080/\1127.0.0.1:7080/' /usr/local/lsws/admin/conf/admin_config.conf && \
+        ! grep -E '^[[:space:]]*address[[:space:]]+(\*|0\.0\.0\.0|\[::\]):[0-9]+' /usr/local/lsws/admin/conf/admin_config.conf; \
+    fi && \
     mv /usr/local/lsws/conf /usr/local/lsws/conf-disabled
 
 COPY ./lsws-conf /usr/local/lsws/conf
