@@ -81,4 +81,4 @@ IMAGE=my/image:tag tests/test-paths.sh
 
 ## Updates
 
-28 Sep 2026
+20 Nov 2026
